@@ -1,0 +1,89 @@
+@startuml vlt_er_model
+hide circle
+skinparam linetype ortho
+
+entity organisation {
+  * organisation_id : int <<PK>>
+  --
+  name : varchar(200)
+  address : varchar(300)
+}
+
+entity season {
+  * season_id : int <<PK>>
+  --
+  name : varchar(100) NOT NULL
+  start_date : date
+  end_date : date
+  description : varchar(300)
+}
+
+entity round_data {
+  * round_id : int <<PK>>
+  --
+  season_id : int <<FK>> NOT NULL
+  round_number : int NOT NULL
+  start_date : date
+  location : varchar(100)
+  description : varchar(300)
+  ==
+  UK (season_id, round_number)
+}
+
+entity race {
+  * race_id : int <<PK>>
+  --
+  round_id : int <<FK>> NOT NULL
+  length : int NOT NULL
+  gender : varchar(1) [M|F]
+  description : varchar(300)
+}
+
+entity runner {
+  * runner_id : int <<PK>>
+  --
+  start_number : int <<UK>>
+  name : varchar(100) <<UK, NOT NULL>>
+  nickname : varchar(45)
+  gender : varchar(1) <<NOT NULL, M|F>>
+  birthday : date
+  is_kid : varchar(1) [Y|N]
+  home_address : varchar(100)
+  email : varchar(100)
+  organisation_id : int <<FK>>
+  first_race_id : int <<FK>>
+}
+
+entity participation {
+  * participation_id : int <<PK>>
+  --
+  race_id : int <<FK, NOT NULL>>
+  runner_id : int <<FK, NOT NULL>>
+  time : time
+  points : int
+  avg_pace : time
+  ==
+  UK (race_id, runner_id)
+}
+
+entity race_import {
+  * id : int <<PK>>
+  --
+  runner_name : varchar(200)
+  length : int
+  time_var : varchar(20)
+  points : int
+  avg_pace_var : varchar(20)
+  time : time
+  avg_pace : time
+  runner_id : int [unconstrained]
+  gender : varchar(1)
+}
+
+season ||--o{ round_data
+round_data ||--o{ race
+race ||--o{ participation
+runner ||--o{ participation
+organisation o|--o{ runner
+race o|--o{ runner : first_race_id
+@enduml
