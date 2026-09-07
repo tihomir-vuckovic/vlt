@@ -40,7 +40,7 @@ public class LeagueService {
         return new RunnerDetail(runner.id, runner.startNumber, runner.name, runner.nickname, runner.gender, runner.birthday, runner.isKid, runner.email, runner.homeAddress, runner.organisation == null ? null : runner.organisation.name, runner.firstRace == null ? null : runner.firstRace.id);
     }
 
-    public List<Season> seasonList() { return seasons.list("startDate"); }
+    public List<Season> seasonList() { return entityManager.createQuery("select s from Season s order by s.startDate", Season.class).getResultList(); }
 
     public PageResponse<RaceSummary> racePage(int page, int size, Integer seasonId) {
         var result = seasonId == null ? races.find("order by round.startDate desc, length, gender") : races.find("round.season.id = ?1 order by round.startDate desc, length, gender", seasonId);
