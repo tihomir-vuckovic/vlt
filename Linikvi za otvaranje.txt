@@ -1,0 +1,4 @@
+Aplikacija je uspešno pokrenuta.
+
+Aplikacija: http://localhost:8080
+Swagger UI: http://localhost:8080/q/swagger-ui

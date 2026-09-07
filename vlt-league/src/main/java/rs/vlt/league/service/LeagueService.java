@@ -5,6 +5,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.transaction.Transactional;
 import rs.vlt.league.dto.ApiDtos.*;
 import rs.vlt.league.entity.*;
 import rs.vlt.league.repository.*;
@@ -44,6 +46,33 @@ public class LeagueService {
 
     public List<OrganisationSummary> organisationList() { return entityManager.createQuery("select o from Organisation o order by o.name", Organisation.class).getResultList().stream().map(o -> new OrganisationSummary(o.id, o.name, o.address)).toList(); }
 
+    @Transactional
+    public OrganisationSummary createOrganisation(OrganisationRequest request) {
+        String name = requiredOrganisationName(request);
+        Organisation organisation = new Organisation();
+        organisation.name = name;
+        organisation.address = clean(request.address());
+        entityManager.persist(organisation);
+        return toOrganisation(organisation);
+    }
+
+    @Transactional
+    public OrganisationSummary updateOrganisation(Integer id, OrganisationRequest request) {
+        Organisation organisation = organisation(id);
+        organisation.name = requiredOrganisationName(request);
+        organisation.address = clean(request.address());
+        return toOrganisation(organisation);
+    }
+
+    @Transactional
+    public void deleteOrganisation(Integer id) {
+        Organisation organisation = organisation(id);
+        if (!entityManager.createQuery("select count(r) from Runner r where r.organisation.id = :id", Long.class).setParameter("id", id).getSingleResult().equals(0L)) {
+            throw new BadRequestException("Organizacija je povezana sa takmicarima i ne moze biti obrisana");
+        }
+        entityManager.remove(organisation);
+    }
+
     public PageResponse<RaceSummary> racePage(int page, int size, Integer seasonId) {
         var result = seasonId == null ? races.find("order by round.startDate desc, length, gender") : races.find("round.season.id = ?1 order by round.startDate desc, length, gender", seasonId);
         long total = result.count();
@@ -69,4 +98,9 @@ public class LeagueService {
     private RoundSummary toRound(RoundData round) { return round == null ? null : new RoundSummary(round.id, round.roundNumber, round.startDate, round.location, round.season.name); }
     private RunnerSummary toRunner(Runner runner) { return new RunnerSummary(runner.id, runner.startNumber, runner.name, runner.nickname, runner.gender, runner.organisation == null ? null : runner.organisation.name); }
     private RaceSummary toRace(Race race) { return new RaceSummary(race.id, race.round.roundNumber, race.round.startDate, race.round.season.name, race.length, race.gender, race.description); }
+    private Organisation organisation(Integer id) { return entityManager.find(Organisation.class, id) != null ? entityManager.find(Organisation.class, id) : throwNotFoundOrganisation(id); }
+    private OrganisationSummary toOrganisation(Organisation organisation) { return new OrganisationSummary(organisation.id, organisation.name, organisation.address); }
+    private String requiredOrganisationName(OrganisationRequest request) { String name = request == null ? null : clean(request.name()); if (name == null || name.isBlank()) throw new BadRequestException("Naziv organizacije je obavezan"); if (name.length() > 200) throw new BadRequestException("Naziv organizacije je predugacak"); return name; }
+    private String clean(String value) { return value == null ? null : value.trim(); }
+    private Organisation throwNotFoundOrganisation(Integer id) { throw new NotFoundException("Organisation not found: " + id); }
 }

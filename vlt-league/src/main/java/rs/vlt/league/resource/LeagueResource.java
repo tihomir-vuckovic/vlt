@@ -7,10 +7,12 @@ import rs.vlt.league.service.LeagueService;
 import rs.vlt.league.entity.Season;
 import rs.vlt.league.dto.ApiDtos.SeasonSummary;
 import rs.vlt.league.dto.ApiDtos.OrganisationSummary;
+import rs.vlt.league.dto.ApiDtos.OrganisationRequest;
 import java.util.List;
 
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class LeagueResource {
     @Inject LeagueService service;
     @GET @Path("/dashboard") public Object dashboard() { return service.dashboard(); }
@@ -18,6 +20,9 @@ public class LeagueResource {
     @GET @Path("/runners/{id}") public Object runner(@PathParam("id") Integer id) { return service.runner(id); }
     @GET @Path("/seasons") public List<SeasonSummary> seasons() { return service.seasonList().stream().map(s -> new SeasonSummary(s.id, s.name)).toList(); }
     @GET @Path("/organisations") public List<OrganisationSummary> organisations() { return service.organisationList(); }
+    @POST @Path("/organisations") public OrganisationSummary createOrganisation(OrganisationRequest request) { return service.createOrganisation(request); }
+    @PUT @Path("/organisations/{id}") public OrganisationSummary updateOrganisation(@PathParam("id") Integer id, OrganisationRequest request) { return service.updateOrganisation(id, request); }
+    @DELETE @Path("/organisations/{id}") public void deleteOrganisation(@PathParam("id") Integer id) { service.deleteOrganisation(id); }
     @GET @Path("/races") public Object races(@DefaultValue("0") @QueryParam("page") int page, @DefaultValue("20") @QueryParam("size") int size, @QueryParam("seasonId") Integer seasonId) { return service.racePage(page, Math.min(Math.max(size, 1), 1000), seasonId); }
     @GET @Path("/races/{id}") public Object race(@PathParam("id") Integer id) { return service.race(id); }
     @GET @Path("/races/{id}/results") public Object results(@PathParam("id") Integer id) { return service.results(id); }
