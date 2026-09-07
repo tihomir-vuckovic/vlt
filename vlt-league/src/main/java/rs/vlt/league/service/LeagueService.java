@@ -24,7 +24,7 @@ public class LeagueService {
     public Dashboard dashboard() {
         RoundData last = rounds.find("startDate <= ?1 order by startDate desc", LocalDate.now()).firstResult();
         RoundData next = rounds.find("startDate > ?1 order by startDate", LocalDate.now()).firstResult();
-        return new Dashboard(runners.count(), races.count(), seasons.count(), toRound(last), toRound(next));
+        return new Dashboard(runners.count(), races.count(), seasons.count(), entityManager.createQuery("select count(o) from Organisation o", Long.class).getSingleResult(), toRound(last), toRound(next));
     }
 
     public PageResponse<RunnerSummary> runnerPage(int page, int size, String query, String sort) {
@@ -41,6 +41,8 @@ public class LeagueService {
     }
 
     public List<Season> seasonList() { return entityManager.createQuery("select s from Season s order by s.startDate", Season.class).getResultList(); }
+
+    public List<OrganisationSummary> organisationList() { return entityManager.createQuery("select o from Organisation o order by o.name", Organisation.class).getResultList().stream().map(o -> new OrganisationSummary(o.id, o.name, o.address)).toList(); }
 
     public PageResponse<RaceSummary> racePage(int page, int size, Integer seasonId) {
         var result = seasonId == null ? races.find("order by round.startDate desc, length, gender") : races.find("round.season.id = ?1 order by round.startDate desc, length, gender", seasonId);
