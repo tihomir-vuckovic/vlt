@@ -80,10 +80,12 @@ entity race_import {
   gender : varchar(1)
 }
 
+
 season ||--o{ round_data
 round_data ||--o{ race
 race ||--o{ participation
 runner ||--o{ participation
-organisation o|--o{ runner
-race o|--o{ runner : first_race_id
+organisation ||--o{ runner
+
+
 @enduml
